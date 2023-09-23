@@ -1,10 +1,12 @@
-use crate::modules::counter::data_frequencies;
+use std::fs::read;
+use std::io::Result as ioResult;
+use crate::huffman::run_huffman;
 
-mod modules;
+mod huffman;
 
-fn main() {
-    let freq = data_frequencies("test.txt").unwrap();
-    for n in freq.nodes {
-        println!("{}: {}", n.datum as char, n.count);
-    }
+fn main() -> ioResult<()> {
+    let input = read("sample.txt")?;
+    run_huffman(input)?;
+
+    Ok(())
 }
