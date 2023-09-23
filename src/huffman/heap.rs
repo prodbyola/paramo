@@ -107,7 +107,7 @@ pub struct HHeap<'a> {
 }
 
 impl<'a> HHeap<'a> {
-    pub fn from_queue(ts: &'a mut Vec<HuffmanNode>) -> HHeap<'a> {
+    pub fn from_queue(ts: &'a mut Vec<HuffmanNode>) {
         while ts.len() > 1 {
             let tmp1 = ts.remove(1);
             let tmp2 = ts.remove(0);
@@ -122,10 +122,6 @@ impl<'a> HHeap<'a> {
             ts.insert(0, tmp3);
         }
 
-        HHeap { 
-            tree: ts.get(0).unwrap(),
-            codes: HashMap::new() 
-        }
     }
 }
 
