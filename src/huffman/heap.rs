@@ -1,5 +1,7 @@
 use std::{collections::{HashMap, BinaryHeap}, rc::Rc};
 
+use super::queue::{Frequencies, Frequency};
+
 // /// Huffman base trait 
 // trait HuffmanNode {
 //     fn is_leaf(&self) -> bool;
@@ -24,7 +26,7 @@ use std::{collections::{HashMap, BinaryHeap}, rc::Rc};
 // }
 
 /// Huffman internal (non-leaf) node implementation 
-#[derive(Clone)]
+#[derive(Eq)]
 pub struct HuffmanNode {
     weight: usize,
     value: Option<u8>,
@@ -33,8 +35,8 @@ pub struct HuffmanNode {
 }
 
 impl HuffmanNode {
-    pub fn init(value: u8) -> HuffmanNode {
-        HuffmanNode { weight: 1, value: Some(value), left: Rc::new(None), right: Rc::new(None) }
+    pub fn init(freq: Frequency) -> HuffmanNode {
+        HuffmanNode { weight: freq.1, value: Some(freq.0), left: Rc::new(None), right: Rc::new(None) }
     }
 
     pub fn weight(&self) -> usize {
@@ -66,22 +68,38 @@ impl HuffmanNode {
 }
 
 /// Huffman tree implementation 
-#[derive(Clone)]
 pub struct HuffmanTree {
     pub root: HuffmanNode 
 }
 
 impl HuffmanTree {
-    pub fn add_weight(&mut self) {
-        self.root.weight += 1;
-    }
+    pub fn new(frequencies: Frequencies) {
+        let mut pq = BinaryHeap::with_capacity(frequencies.len());
+        for freq in frequencies {
+            pq.push(HuffmanNode::init(freq));
+        }
 
-    pub fn weight(&self) -> usize {
-        self.root.weight()
-    }
+        while let Some(i)  = &pq.pop() {
+            println!("{}: {}", i.value.unwrap() as char, i.weight);
+        }
 
-    pub fn value(&self) -> Option<u8> {
-        self.root.value
+        // while pq.len() > 1 {
+        //     let left = pq.pop().unwrap();
+        //     let right = pq.pop().unwrap();
+
+        //     let merged = HuffmanNode {
+        //         value: None,
+        //         weight: left.weight + right.weight,
+        //         left: Rc::new(Some(left)),
+        //         right: Rc::new(Some(right))
+        //     };
+
+        //     pq.push(merged);
+        // }
+
+        // let root = pq.pop().unwrap();
+
+        // HuffmanTree { root }
     }
 }
 
@@ -101,38 +119,25 @@ impl PartialOrd for HuffmanNode {
     }
 }
 
-pub struct HHeap<'a> {
-    pub tree: &'a HuffmanTree,
-    pub codes: HashMap<u8, String>,
-}
+impl Ord for HuffmanNode {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.weight().cmp(&other.weight())
+    }
 
-impl<'a> HHeap<'a> {
-    pub fn from_queue(ts: &'a mut Vec<HuffmanNode>) -> HHeap<'a> {
-        while ts.len() > 1 {
-            let tmp1 = ts.remove(1);
-            let tmp2 = ts.remove(0);
+    fn max(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
+        std::cmp::max_by(self, other, Ord::cmp)
+    }
 
-            let tmp3 = HuffmanNode {
-                weight: tmp1.weight() + tmp2.weight(),
-                left: Rc::new(Some(tmp1)),
-                right: Rc::new(Some(tmp2)),
-                value: None,
-            };
-
-            ts.insert(0, tmp3);
-        }
-
-        HHeap { 
-            tree: ts.get(0).unwrap(),
-            codes: HashMap::new() 
-        }
+    fn min(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
+        std::cmp::min_by(self, other, Ord::cmp)
     }
 }
-
-// fn build_heap(){
-//     let hp = BinaryHeap::new();
-//     hp
-// }
 
 pub fn assign_codes(root: Option<&HuffmanNode>, current_code: &mut String, codes: &mut HashMap<u8, String>) {
     if let Some(t) = root {
