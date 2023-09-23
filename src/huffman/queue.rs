@@ -1,12 +1,12 @@
 
-pub type Frequency = (u8, usize);
-pub type Frequencies = Vec<Frequency>;
-pub struct FrequencyStruct {
-    pub data: Frequencies
+pub struct  Frequency<'a>(pub &'a u8, pub usize);
+pub type Frequencies<'a> = Vec<Frequency<'a>>;
+pub struct FrequencyStruct<'a> {
+    pub data: Frequencies<'a>
 }
 
-impl FrequencyStruct {
-    fn new(len: usize) -> FrequencyStruct {
+impl<'a> FrequencyStruct<'a> {
+    fn new(len: usize) -> FrequencyStruct<'static> {
         FrequencyStruct { data: Vec::with_capacity(len) }
     }
 
@@ -19,7 +19,7 @@ impl FrequencyStruct {
         let nodes = &self.data;
 
         for (i, n) in nodes.iter().enumerate() {
-            if n.0 == *b {
+            if n.0 == b {
                 index = Some(i);
                 break;
             }
@@ -35,13 +35,13 @@ impl FrequencyStruct {
     }
 
     /// Creates a new node
-    fn insert_new_tree(&mut self, data: u8){
-        self.data.insert(0, (data, 1));
+    fn insert_new_tree(&mut self, data: &'a u8){
+        self.data.insert(0, Frequency(data, 1));
     }   
 }
 
 
-pub fn frequency_counter(data: Vec<u8>) -> Option<FrequencyStruct> {
+pub fn frequency_counter(data: &Vec<u8>) -> Option<FrequencyStruct> {
     if data.is_empty() {
         return None
     }
@@ -49,7 +49,7 @@ pub fn frequency_counter(data: Vec<u8>) -> Option<FrequencyStruct> {
     let mut queue = FrequencyStruct::new(data.len());
 
     for b in data {
-        match queue.get_data_index(&b) {
+        match queue.get_data_index(b) {
             Some(i) => queue.increase_data_weight(i),
             None => queue.insert_new_tree(b)
         }
@@ -67,7 +67,7 @@ mod test {
     #[test]
     fn test_create_queue() -> ioResult<()>{
         let data = read("test.txt")?;
-        let q = frequency_counter(data);
+        let q = frequency_counter(&data);
         assert!(q.is_some());
 
         Ok(())

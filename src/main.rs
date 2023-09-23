@@ -1,12 +1,12 @@
 use std::fs::read;
 use std::io::Result as ioResult;
-use crate::huffman::run_huffman;
+use crate::huffman::huffman_encoder;
 
 mod huffman;
 
 fn main() -> ioResult<()> {
     let input = read("sample.txt")?;
-    run_huffman(input)?;
+    huffman_encoder(input)?;
 
     Ok(())
 }

@@ -1,24 +1,20 @@
-use std::collections::HashMap;
-use std::io::Result as ioResult;
-use crate::huffman::heap::assign_codes;
+use std::fs::File;
+use std::io::{Result as ioResult, Write};
 
 use self::queue::frequency_counter;
-use self::heap::HuffmanTree;
+use self::heap::HuffmanEncoder;
 
 mod queue;
 mod heap;
 
-pub fn run_huffman(input: Vec<u8>) -> ioResult<()>{
-    let freq = frequency_counter(input).unwrap();
+pub fn huffman_encoder(input_data: Vec<u8>) -> ioResult<()>{
+    let freq = frequency_counter(&input_data).unwrap();
 
-    let tree = HuffmanTree::new(freq.data);
-    let mut codes = HashMap::new();
-    let root = Some(&tree.root);
+    let mut encoder = HuffmanEncoder::new(freq.data, &input_data);
+    let encoded = encoder.encode()?;
+    let output = "output";
+    let mut file = File::create(output)?;
+    file.write_all(&encoded)?;
 
-    assign_codes(root, &mut String::new(), &mut codes);
-    
-    for (k, v) in codes {
-        println!("{}: {}", k as char, v);
-    }
     Ok(())
 }
