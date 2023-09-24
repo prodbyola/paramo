@@ -63,8 +63,7 @@ impl Ord for HuffmanNode<'_> {
 /// Huffman tree implementation 
 pub struct HuffmanEncoder<'a> {
     root: HuffmanNode<'a>,
-    codes: HashMap<&'a u8, String>,
-    input: &'a Vec<u8>,
+    input_data: &'a Vec<u8>,
 }
 
 impl<'a> HuffmanEncoder<'a> {
@@ -90,25 +89,31 @@ impl<'a> HuffmanEncoder<'a> {
 
         let root = pq.pop().unwrap();
 
-        HuffmanEncoder { root, input, codes: HashMap::new() }
+        HuffmanEncoder { 
+            root, 
+            input_data: input, 
+        }
     }
 
-    fn assign_codes(&'a mut self) -> &HuffmanEncoder<'a> {
-        assign_codes(Some(&self.root), &mut String::new(), &mut self.codes);
-        self
+    pub fn assign_codes(&'a self, codes: &mut HashMap<u8, String>) {
+        
+        assign_codes(
+            Some(&self.root), 
+            &mut String::new(), 
+            codes
+        );
     }
 
-    pub fn encode(&'a mut self) -> Result<Vec<u8>, Error> {
-        let encoder = self.assign_codes();
+    pub fn encode(&'a mut self, codes: &HashMap<u8, String>) -> Result<Vec<u8>, Error> {
+        // let encoder = self.assign_codes();
 
         // Let's encode our data as binary using the generated Huffman code.
         let mut current_byte = 0u8; // 8-bits zeros
         let mut remaining_bytes: u8 = 8;
         let mut encoded_data = Vec::new();
-        // let mut err = None;
 
-        for c in encoder.input {
-            if let Some(code) = encoder.codes.get(c) {
+        for c in self.input_data {
+            if let Some(code) = codes.get(c) {
                 for bit in code.chars() {
                     let bit_value: u8 = if bit == '1' { 1 } else { 0 };
                     current_byte = (current_byte << 1) | bit_value;
@@ -133,11 +138,11 @@ impl<'a> HuffmanEncoder<'a> {
     }
 }
 
-fn assign_codes<'a>(root: Option<&'a HuffmanNode>, current_code: &mut String, codes: &mut HashMap<&'a u8, String>) {
+fn assign_codes<'a>(root: Option<&'a HuffmanNode>, current_code: &mut String, codes: &mut HashMap<u8, String>) {
     if let Some(t) = root {
         if t.is_leaf() {
             if let Some(v) = t.value {
-                codes.insert(v, current_code.to_owned());
+                codes.insert(v.to_owned(), current_code.to_owned());
                 return;
             }
         }
