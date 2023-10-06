@@ -19,7 +19,7 @@ fn main() -> ioResult<()> {
     if opt.decode {
         huffman_decoder()?;
     } else {
-        let input = read("sample.txt")?;
+        let input = read("sample2.txt")?;
         huffman_encoder(input)?;
     }
 

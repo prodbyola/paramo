@@ -1,12 +1,14 @@
+use serde::{Deserialize, Serialize};
 
-pub struct  Frequency<'a>(pub &'a u8, pub usize);
-pub type Frequencies<'a> = Vec<Frequency<'a>>;
-pub struct FrequencyStruct<'a> {
-    pub data: Frequencies<'a>
+#[derive(Serialize, Deserialize)]
+pub struct  Frequency(pub u8, pub usize);
+pub type Frequencies = Vec<Frequency>;
+pub struct FrequencyStruct {
+    pub data: Frequencies
 }
 
-impl<'a> FrequencyStruct<'a> {
-    fn new(len: usize) -> FrequencyStruct<'static> {
+impl FrequencyStruct {
+    fn new(len: usize) -> FrequencyStruct {
         FrequencyStruct { data: Vec::with_capacity(len) }
     }
 
@@ -19,7 +21,7 @@ impl<'a> FrequencyStruct<'a> {
         let nodes = &self.data;
 
         for (i, n) in nodes.iter().enumerate() {
-            if n.0 == b {
+            if n.0 == *b {
                 index = Some(i);
                 break;
             }
@@ -35,9 +37,18 @@ impl<'a> FrequencyStruct<'a> {
     }
 
     /// Creates a new node
-    fn insert_new_tree(&mut self, data: &'a u8){
+    fn insert_new_tree(&mut self, data: u8){
         self.data.insert(0, Frequency(data, 1));
-    }   
+    }
+
+    // pub fn pull_data(&self) -> Vec<(u8, usize)> {
+    //     let mut data = Vec::with_capacity(self.data.len());
+    //     for f in &self.data {
+    //         data.push((f.0, f.1));
+    //     }
+
+    //     data
+    // }
 }
 
 
@@ -51,7 +62,7 @@ pub fn frequency_counter(data: &Vec<u8>) -> Option<FrequencyStruct> {
     for b in data {
         match queue.get_data_index(b) {
             Some(i) => queue.increase_data_weight(i),
-            None => queue.insert_new_tree(b)
+            None => queue.insert_new_tree(*b)
         }
     }
 

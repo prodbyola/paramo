@@ -11,9 +11,9 @@ pub struct HuffmanNode<'a > {
     right: Rc<Option<HuffmanNode<'a>>>,
 }
 
-impl HuffmanNode<'_> {
-    fn init(freq: Frequency) -> HuffmanNode {
-        HuffmanNode { weight: freq.1, value: Some(freq.0), left: Rc::new(None), right: Rc::new(None) }
+impl<'a> HuffmanNode<'a> {
+    fn init(freq: &'a Frequency) -> HuffmanNode<'a> {
+        HuffmanNode { weight: freq.1, value: Some(&freq.0), left: Rc::new(None), right: Rc::new(None) }
     }
 
     fn weight(&self) -> usize {
@@ -63,11 +63,12 @@ impl Ord for HuffmanNode<'_> {
 /// Huffman tree implementation 
 pub struct HuffmanEncoder<'a> {
     root: HuffmanNode<'a>,
-    input_data: &'a Vec<u8>,
+    codes: HashMap<u8, String>,
 }
 
 impl<'a> HuffmanEncoder<'a> {
-    pub fn new(frequencies: Frequencies<'a>, input: &'a Vec<u8>) -> HuffmanEncoder<'a> {
+    pub fn new(frequencies: &'a Frequencies) -> HuffmanEncoder {
+        // The priority queue for building our initial partial tree
         let mut pq = BinaryHeap::with_capacity(frequencies.len());
         for freq in frequencies {
             pq.push(HuffmanNode::init(freq));
@@ -87,24 +88,22 @@ impl<'a> HuffmanEncoder<'a> {
             pq.push(merged);
         }
 
-        let root = pq.pop().unwrap();
+        let root: HuffmanNode<'a> = pq.pop().unwrap();
+        let mut codes: HashMap<u8, String> = HashMap::new();
+
+        assign_codes(
+            Some(&root), 
+            &mut String::new(), 
+            &mut codes
+        );
 
         HuffmanEncoder { 
             root, 
-            input_data: input, 
+            codes
         }
     }
 
-    pub fn assign_codes(&'a self, codes: &mut HashMap<u8, String>) {
-        
-        assign_codes(
-            Some(&self.root), 
-            &mut String::new(), 
-            codes
-        );
-    }
-
-    pub fn encode(&'a mut self, codes: &HashMap<u8, String>) -> Result<Vec<u8>, Error> {
+    pub fn encode(&'a mut self, input_data: &Vec<u8>) -> Result<Vec<u8>, Error> {
         // let encoder = self.assign_codes();
 
         // Let's encode our data as binary using the generated Huffman code.
@@ -112,8 +111,8 @@ impl<'a> HuffmanEncoder<'a> {
         let mut remaining_bytes: u8 = 8;
         let mut encoded_data = Vec::new();
 
-        for c in self.input_data {
-            if let Some(code) = codes.get(c) {
+        for c in input_data {
+            if let Some(code) = self.codes.get(c) {
                 for bit in code.chars() {
                     let bit_value: u8 = if bit == '1' { 1 } else { 0 };
                     current_byte = (current_byte << 1) | bit_value;
@@ -136,13 +135,21 @@ impl<'a> HuffmanEncoder<'a> {
 
         Ok(encoded_data)
     }
+
+    pub fn decode(&self, encoded_data: Vec<u8>) -> Result<Vec<u8>, Error> {
+        decode(&self.root, encoded_data)
+    }
 }
 
-fn assign_codes<'a>(root: Option<&'a HuffmanNode>, current_code: &mut String, codes: &mut HashMap<u8, String>) {
+fn assign_codes<'a>(
+    root: Option<&'a HuffmanNode>, 
+    current_code: &mut String, 
+    codes: &mut HashMap<u8, String>
+) {
     if let Some(t) = root {
         if t.is_leaf() {
             if let Some(v) = t.value {
-                codes.insert(v.to_owned(), current_code.to_owned());
+                codes.insert(*v, current_code.to_owned());
                 return;
             }
         }
@@ -159,4 +166,63 @@ fn assign_codes<'a>(root: Option<&'a HuffmanNode>, current_code: &mut String, co
             current_code.pop();
         }
     }
+}
+
+fn decode<'a>(root: &'a HuffmanNode<'a>, encoded_data: Vec<u8>) -> Result<Vec<u8>, Error> {
+    let mut decoded_data = Vec::new();
+    let mut current_byte = 0u8;
+    let mut remaining_bits = 0;
+
+    let mut current_node = root;
+
+    for byte in encoded_data {
+        for bit_position in (0..8).rev() {
+            let bit = (byte >> bit_position) & 1;
+            if bit == 0 {
+                if let Some(n) = current_node.left().as_ref() {
+                    current_node = n;
+                }
+            } else {
+                if let Some(n) = current_node.right().as_ref() {
+                    current_node = n;
+                }
+            }
+
+            if current_node.is_leaf() {
+                let value = current_node.value.unwrap();
+                println!("leaf val {}", *value as char);
+                current_byte = (current_byte << 1) | value;
+                remaining_bits += 1;
+
+                if remaining_bits == 8 {
+                    // println!("{}", current_byte);
+                    decoded_data.push(current_byte);
+                    remaining_bits = 0;
+                    current_byte = 0;
+                }
+            }
+        }
+    }
+
+    // Check for any remaining bits in the last byte and handle padding
+    // if remaining_bits > 0 {
+    //     // Determine the number of padding bits
+    //     let padding_bits = 8 - remaining_bits;
+
+    //     // Ensure that the padding bits are all zeros
+    //     if (current_byte >> padding_bits) != 0 {
+    //         return Err(Error::new(
+    //             std::io::ErrorKind::InvalidData,
+    //             "Invalid encoded data: padding bits are not zero.",
+    //         ));
+    //     }
+
+    //     // Remove padding bits from the last byte
+    //     current_byte &= (1 << padding_bits) - 1;
+
+    //     // Push the last byte without padding to the decoded data
+    //     decoded_data.push(current_byte);
+    // }
+
+    Ok(decoded_data)
 }

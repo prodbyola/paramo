@@ -1,6 +1,8 @@
-use std::{io::Error, collections::HashMap};
+use std::io::Error;
 
 use serde::{Deserialize, Serialize};
+
+use super::queue::Frequencies;
 
 pub trait BitString {
     fn len(&self) -> usize;
@@ -59,9 +61,10 @@ impl BitString for String {
 
 #[derive(Serialize, Deserialize)]
 pub struct Header {
-    pub codes: HashMap<u8, String>
+    pub frequencies: Frequencies
 }
 
+/// Generates a repeated character string
 pub fn str_generator(c: char, len: usize) -> String {
     std::iter::repeat(c).take(len).collect()
 }

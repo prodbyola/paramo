@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs::{OpenOptions, File, remove_file, self};
 use std::io::{Result as ioResult, Write, Read, Seek, SeekFrom};
 
@@ -15,18 +14,12 @@ mod utils;
 
 
 pub fn huffman_encoder(input_data: Vec<u8>) -> ioResult<()>{
-    println!("input len {}", input_data.len());
-
     let freq = frequency_counter(&input_data).unwrap();
-    let mut codes = HashMap::new();
-
-    let mut encoder = HuffmanEncoder::new(freq.data, &input_data);
     
-    encoder.assign_codes(&mut codes);
-    let data = encoder.encode(&codes)?;
-    println!("encoded len {}", data.len());
+    let mut encoder = HuffmanEncoder::new(&freq.data);
+    let data = encoder.encode(&input_data)?;
 
-    let header_bytes = serde_json::to_vec(&Header { codes })?;
+    let header_bytes = serde_json::to_vec(&Header { frequencies: freq.data })?;
 
     // We generate a 4-byte container to store our header length
     // This will be used to retrieve header content when decoding
@@ -68,8 +61,8 @@ pub fn huffman_decoder() -> ioResult<()> {
     file.read_exact(&mut header_bytes)?;
     
     let header: Header = serde_json::from_slice(&header_bytes)?;
-
-    println!("{:?}", header.codes.len());
+    let encoder = HuffmanEncoder::new(&header.frequencies);
+    // println!("{:?}", header.frequencies.len());
 
     // read the data
     let hlen = u64::try_from(hlen).unwrap();
@@ -77,7 +70,13 @@ pub fn huffman_decoder() -> ioResult<()> {
     let mut data = Vec::new();
     file.read_to_end(&mut data)?;
 
-    println!("data len {}", data.len());
+    println!("data len {}", &data.len());
+
+    let decoded_data = encoder.decode(data)?;
+    let mut file = OpenOptions::new()
+        .write(true).open("test_out.txt")?;
+
+    file.write_all(&decoded_data)?;
 
     Ok(())
 }
