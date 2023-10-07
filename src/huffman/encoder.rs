@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, BinaryHeap}, rc::Rc};
 use std::io::Error;
-use super::queue::{Frequencies, Frequency};
+use super::frequency::{Frequencies, Frequency};
 
 /// Huffman internal (non-leaf) node implementation 
 #[derive(Eq)]
@@ -97,8 +97,6 @@ impl<'a> HuffmanEncoder<'a> {
             &mut codes
         );
 
-        // traverse(Some(&root));
-
         HuffmanEncoder { 
             root, 
             codes
@@ -152,10 +150,11 @@ fn assign_codes<'a>(
             if let Some(v) = t.value {
                 codes.insert(*v, current_code.clone());
             }
+
+            return;
         }
 
         if let Some(_) = t.left() {
-
             let mut left_code = current_code.clone();
             left_code.push('0');
             assign_codes(t.left().as_ref(), &mut left_code, codes);
@@ -171,49 +170,25 @@ fn assign_codes<'a>(
 
 fn decode<'a>(root: &'a HuffmanNode<'a>, encoded_data: Vec<u8>) -> Result<Vec<u8>, Error> {
     let mut decoded_data = Vec::new();
-    let mut current_byte = 0u8;
-    let mut remaining_bits = 0;
-
     let mut current_node = root;
 
     for byte in encoded_data {
-        // println!("{:b}", &byte);
         for bit_position in (0..8).rev() {
             let bit = (byte >> bit_position) & 1;
-            // if remaining_bits < 8 {
-            //     println!("bit {}", &bit);
-            // }
-
             if bit == 0 {
-                if let Some(n) = current_node.left() {
-                    // current_node = n;
-                    // if n.is_leaf() {
-                    //     println!("left {}", n.value.unwrap())
-                    // }
-
-                    current_node = n;
+                if let Some(left) = current_node.left() {
+                    current_node = left;
                 }
             } else {
-                if let Some(n) = current_node.right() {
-                    // if n.is_leaf() {
-                    //     println!("right {}", n.value.unwrap())
-                    // }
-                    current_node = n;
+                if let Some(right) = current_node.right() {
+                    current_node = right;
                 }
             }
 
             if current_node.is_leaf() {
                 let value = current_node.value.unwrap();
-                // println!("leaf val {}", *value as char);
-                current_byte = (current_byte << 1) | (*value as u8);
-                remaining_bits += 1;
-
-                if remaining_bits == 8 {
-                    // println!("{}", current_byte);
-                    decoded_data.push(current_byte);
-                    remaining_bits = 0;
-                    current_byte = 0;
-                }
+                decoded_data.push(*value as u8);
+                current_node = root;
             }
         }
     }
@@ -239,26 +214,4 @@ fn decode<'a>(root: &'a HuffmanNode<'a>, encoded_data: Vec<u8>) -> Result<Vec<u8
     // }
 
     Ok(decoded_data)
-}
-
-fn traverse<'a>(root: Option<&'a HuffmanNode>) {
-    // let mut left_count = 0;
-    // let mut right_count = 0;
-
-    if let Some(r) = root {
-        if let Some(left) = r.left() {
-            if left.is_leaf() {
-                println!("left leaf: {}", *left.value.unwrap())
-            }
-        }
-
-        if let Some(right) = r.right() {
-            if right.is_leaf() {
-                println!("right leaf: {}", *right.value.unwrap())
-            }
-        }
-
-        traverse(r.left().as_ref());
-        traverse(r.right().as_ref());
-    }
 }

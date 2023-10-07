@@ -1,8 +1,16 @@
-use std::io::Error;
+use std::{io::{Error, Result as ioResult}, fs::{remove_file, self}};
 
+use clap::{Parser, command};
 use serde::{Deserialize, Serialize};
 
-use super::queue::Frequencies;
+use super::frequency::Frequencies;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+pub struct AppOptions {
+    #[arg(short, long, default_value_t = false)]
+    pub decode: bool
+}
 
 pub trait BitString {
     fn len(&self) -> usize;
@@ -67,4 +75,12 @@ pub struct Header {
 /// Generates a repeated character string
 pub fn str_generator(c: char, len: usize) -> String {
     std::iter::repeat(c).take(len).collect()
+}
+
+pub fn rm_file(path: &str) -> ioResult<()> {
+    if let Ok(_) = fs::metadata(path) {
+        remove_file(path)?;
+    }
+
+    Ok(())
 }

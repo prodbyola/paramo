@@ -1,19 +1,19 @@
-use std::fs::{OpenOptions, File, remove_file, self};
+use std::fs::{OpenOptions, File, read};
 use std::io::{Result as ioResult, Write, Read, Seek, SeekFrom};
 
 use crate::huffman::utils::{str_generator, Header};
 
-use self::queue::frequency_counter;
+use self::frequency::frequency_counter;
 use self::encoder::HuffmanEncoder;
-use self::utils::BitString;
+use self::utils::{BitString, AppOptions, rm_file};
 
-mod queue;
+mod frequency;
 mod encoder;
-mod utils;
+pub mod utils;
 
-
-
-pub fn huffman_encoder(input_data: Vec<u8>) -> ioResult<()>{
+/// Implements huffman encoder
+fn huffman_encoder(input: &str, output: &str) -> ioResult<()>{
+    let input_data = read(input)?;
     let freq = frequency_counter(&input_data).unwrap();
     
     let mut encoder = HuffmanEncoder::new(&freq.data);
@@ -28,11 +28,7 @@ pub fn huffman_encoder(input_data: Vec<u8>) -> ioResult<()>{
     hlen_container.push_str(&hlen_bits);
     let hlen = hlen_container.to_vec()?;
 
-    let output = "output";
-    if let Ok(_) = fs::metadata(output) {
-        remove_file(output)?;
-    }
-
+    rm_file(output)?;
     let mut file = OpenOptions::new()
         .write(true)
         .append(true)
@@ -46,8 +42,9 @@ pub fn huffman_encoder(input_data: Vec<u8>) -> ioResult<()>{
     Ok(())
 }
 
-pub fn huffman_decoder() -> ioResult<()> {
-    let mut file = File::open("output")?;
+/// Implements huffman decoder
+fn huffman_decoder(input: &str, output: &str) -> ioResult<()> {
+    let mut file = File::open(input)?;
     let mut hlen_bytes = [0u8; 4];
 
     // Get file header's length
@@ -62,7 +59,6 @@ pub fn huffman_decoder() -> ioResult<()> {
     
     let header: Header = serde_json::from_slice(&header_bytes)?;
     let encoder = HuffmanEncoder::new(&header.frequencies);
-    // println!("{:?}", header.frequencies.len());
 
     // read the data
     let hlen = u64::try_from(hlen).unwrap();
@@ -70,13 +66,24 @@ pub fn huffman_decoder() -> ioResult<()> {
     let mut data = Vec::new();
     file.read_to_end(&mut data)?;
 
-    println!("data len {}", &data.len());
-
     let decoded_data = encoder.decode(data)?;
+    rm_file(output)?;
     let mut file = OpenOptions::new()
-        .write(true).open("test_out.txt")?;
+        .write(true)
+        .create(true)
+        .open(output)?;
 
     file.write_all(&decoded_data)?;
+
+    Ok(())
+}
+
+pub fn run_huffman(opts: AppOptions) -> ioResult<()> {
+    if opts.decode {
+        huffman_decoder("output", "decoded.txt")?;
+    } else {
+        huffman_encoder("sample.txt", "output")?;
+    }
 
     Ok(())
 }
