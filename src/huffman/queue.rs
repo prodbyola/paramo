@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct  Frequency(pub u8, pub usize);
+pub struct  Frequency(pub char, pub usize);
 pub type Frequencies = Vec<Frequency>;
 pub struct FrequencyStruct {
     pub data: Frequencies
@@ -16,7 +16,7 @@ impl FrequencyStruct {
     /// 
     /// This checks if a `DataFrequency` is already added for a data point and if so, 
     /// returns the frequency's index. Returns `None` if the frequency doesn't exist.
-    fn get_data_index(&self, b: &u8) -> Option<usize>{
+    fn get_data_index(&self, b: &char) -> Option<usize>{
         let mut index = None;
         let nodes = &self.data;
 
@@ -37,7 +37,7 @@ impl FrequencyStruct {
     }
 
     /// Creates a new node
-    fn insert_new_tree(&mut self, data: u8){
+    fn insert_new_tree(&mut self, data: char){
         self.data.insert(0, Frequency(data, 1));
     }
 
@@ -60,9 +60,9 @@ pub fn frequency_counter(data: &Vec<u8>) -> Option<FrequencyStruct> {
     let mut queue = FrequencyStruct::new(data.len());
 
     for b in data {
-        match queue.get_data_index(b) {
+        match queue.get_data_index(&(*b as char)) {
             Some(i) => queue.increase_data_weight(i),
-            None => queue.insert_new_tree(*b)
+            None => queue.insert_new_tree(*b as char)
         }
     }
 
