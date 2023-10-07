@@ -80,9 +80,9 @@ fn huffman_decoder(input: &str, output: &str) -> ioResult<()> {
 
 pub fn run_huffman(opts: AppOptions) -> ioResult<()> {
     if opts.decode {
-        huffman_decoder("output", "decoded.txt")?;
+        huffman_decoder(&opts.input, &opts.output)?;
     } else {
-        huffman_encoder("sample.txt", "output")?;
+        huffman_encoder(&opts.input, &opts.output)?;
     }
 
     Ok(())

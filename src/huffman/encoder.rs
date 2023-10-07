@@ -193,25 +193,5 @@ fn decode<'a>(root: &'a HuffmanNode<'a>, encoded_data: Vec<u8>) -> Result<Vec<u8
         }
     }
 
-    // Check for any remaining bits in the last byte and handle padding
-    // if remaining_bits > 0 {
-    //     // Determine the number of padding bits
-    //     let padding_bits = 8 - remaining_bits;
-
-    //     // Ensure that the padding bits are all zeros
-    //     if (current_byte >> padding_bits) != 0 {
-    //         return Err(Error::new(
-    //             std::io::ErrorKind::InvalidData,
-    //             "Invalid encoded data: padding bits are not zero.",
-    //         ));
-    //     }
-
-    //     // Remove padding bits from the last byte
-    //     current_byte &= (1 << padding_bits) - 1;
-
-    //     // Push the last byte without padding to the decoded data
-    //     decoded_data.push(current_byte);
-    // }
-
     Ok(decoded_data)
 }

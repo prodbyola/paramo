@@ -40,15 +40,6 @@ impl FrequencyStruct {
     fn insert_new_tree(&mut self, data: char){
         self.data.insert(0, Frequency(data, 1));
     }
-
-    // pub fn pull_data(&self) -> Vec<(u8, usize)> {
-    //     let mut data = Vec::with_capacity(self.data.len());
-    //     for f in &self.data {
-    //         data.push((f.0, f.1));
-    //     }
-
-    //     data
-    // }
 }
 
 

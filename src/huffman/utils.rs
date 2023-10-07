@@ -8,8 +8,14 @@ use super::frequency::Frequencies;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct AppOptions {
+    #[arg(short, long)]
+    pub input: String,
+
+    #[arg(short, long)]
+    pub output: String,
+    
     #[arg(short, long, default_value_t = false)]
-    pub decode: bool
+    pub decode: bool,
 }
 
 pub trait BitString {
