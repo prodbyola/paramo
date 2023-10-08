@@ -1,4 +1,4 @@
-use std::{io::{Error, Result as ioResult}, fs::{remove_file, self}};
+use std::{io::{Error as ioError, Result as ioResult, ErrorKind}, fs::{remove_file, self, create_dir_all}, path::{Path, PathBuf}};
 
 use clap::{Parser, command};
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,10 @@ pub struct AppOptions {
     pub input: String,
 
     #[arg(short, long)]
-    pub output: String,
+    pub output_folder: Option<String>,
+    
+    #[arg(short, long)]
+    pub filename: Option<String>,
     
     #[arg(short, long, default_value_t = false)]
     pub decode: bool,
@@ -22,7 +25,7 @@ pub trait BitString {
     fn len(&self) -> usize;
 
     /// Converts the input string to to `Vec`.
-    fn to_vec(&self) -> Result<Vec<u8>, Error>;
+    fn to_vec(&self) -> Result<Vec<u8>, ioError>;
 
     /// Checks if the string can converted to `Vec`. 
     fn is_complete(&self) -> bool {
@@ -40,9 +43,9 @@ impl BitString for String {
         self.len()
     }
 
-    fn to_vec(&self) -> Result<Vec<u8>, Error> {
+    fn to_vec(&self) -> Result<Vec<u8>, ioError> {
         if !self.is_complete() {
-            let err = Error::new(std::io::ErrorKind::InvalidInput, "String is not a complete bit string.");
+            let err = ioError::new(std::io::ErrorKind::InvalidInput, "String is not a complete bit string.");
             return Err(err);
         }
 
@@ -52,7 +55,7 @@ impl BitString for String {
 
         for bit in self.chars() {
             if bit != '1' && bit != '0' {
-                let err = Error::new(std::io::ErrorKind::InvalidData, "Not a valid bit string");
+                let err = ioError::new(std::io::ErrorKind::InvalidData, "Not a valid bit string");
                 return Err(err);
             }
 
@@ -75,7 +78,8 @@ impl BitString for String {
 
 #[derive(Serialize, Deserialize)]
 pub struct Header {
-    pub frequencies: Frequencies
+    pub frequencies: Frequencies,
+    pub extension: Option<String>
 }
 
 /// Generates a repeated character string
@@ -83,10 +87,90 @@ pub fn str_generator(c: char, len: usize) -> String {
     std::iter::repeat(c).take(len).collect()
 }
 
-pub fn rm_file(path: &str) -> ioResult<()> {
+pub fn rm_file<P: AsRef<Path>>(path: &P) -> ioResult<()> {
     if let Ok(_) = fs::metadata(path) {
         remove_file(path)?;
     }
 
     Ok(())
+}
+
+#[derive(Default)]
+pub struct ParamoIOFiles {
+    pub input: PathBuf,
+    pub output: PathBuf,
+    pub input_ext: Option<String>,
+    pub output_ext: Option<String>,
+}
+impl ParamoIOFiles {
+    pub fn parse(opts: &AppOptions) -> ioResult<ParamoIOFiles> {
+        let mut io_files = ParamoIOFiles::default();
+        let input_arg = &opts.input;
+
+        // validate the input path argument
+        let input = PathBuf::from(input_arg);
+        if !input.exists() {
+            let err = ioError::new(ErrorKind::NotFound, "Specified input file does not exist!");
+            return Err(err);
+        }
+
+        if !input.is_file() {
+            let err = ioError::new(ErrorKind::InvalidInput, "Input must be a valid file path");
+            return Err(err);
+        }
+        
+        // Extract input file extension. 
+        // This will be stored in encoded file header
+        // and can be retrieved during decoding
+        if !opts.decode {
+            io_files.input_ext = input
+                .extension()
+                .map(|s| s.to_string_lossy().to_string());
+        }
+
+        // Build output path
+        let out_ext = ".paramo";
+        let mut output = input.clone();
+        output.pop();
+
+        let default_output_name = if opts.decode { "decoded" } else { "encoded" }.to_string();
+
+        let mut output_basename = input
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or(default_output_name.clone());
+
+        if let Some(f) = &opts.filename {
+            output_basename = f.to_string();
+
+            if opts.decode && output_basename.contains(".") {
+                let sob = output_basename.split(".");
+                let ext = sob.last();
+                io_files.output_ext = ext.map(|s| s.to_string());
+            }
+        }
+
+        if !&opts.decode {
+            output_basename.push_str(out_ext);
+        }
+        
+        if let Some(out_arg) = &opts.output_folder {
+            output = PathBuf::from(out_arg);
+
+            // If output folder does not exist, create it.
+            if !output.exists() {
+                create_dir_all(&output)?
+            }
+        }
+
+        output.push(output_basename);
+
+        // update io_files with built path
+        io_files.output = output;
+        io_files.input = input;
+
+        Ok(io_files)
+    }
+
+    
 }
