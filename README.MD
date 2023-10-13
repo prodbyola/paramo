@@ -37,6 +37,4 @@ This is a [Rust](https://www.rust-lang.org/tools/install) project. Contributions
 
 ## Roadmap
 - Add Process Monitor
-- Add Deflate implementation
-- Add LZMA2 implementation
-- Folder compression
+- Archiving and Folder compression
