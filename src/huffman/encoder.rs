@@ -2,6 +2,12 @@ use std::{collections::{HashMap, BinaryHeap}, rc::Rc};
 use std::io::Error;
 use super::frequency::{Frequencies, Frequency};
 
+#[derive(Default)]
+pub struct Encoded {
+    pub data: Vec<u8>,
+    pub padding: Option<u8>
+}
+
 /// Huffman internal (non-leaf) node implementation 
 #[derive(Eq)]
 pub struct HuffmanNode<'a > {
@@ -103,12 +109,12 @@ impl<'a> HuffmanEncoder<'a> {
         }
     }
 
-    pub fn encode(&'a mut self, input_data: &Vec<u8>) -> Result<Vec<u8>, Error> {
+    pub fn encode(&'a mut self, input_data: &Vec<u8>) -> Result<Encoded, Error> {
 
         // Let's encode our data as binary using the generated Huffman code.
         let mut current_byte = 0u8; // 8-bits zeros
-        let mut remaining_bytes: u8 = 8;
-        let mut encoded_data = Vec::new();
+        let mut remaining_bits: u8 = 8;
+        let mut encoded = Encoded::default();
 
         for c in input_data {
             if let Some(code) = self.codes.get(&(*c as char)) {
@@ -116,13 +122,13 @@ impl<'a> HuffmanEncoder<'a> {
                     let bit_value: u8 = if bit == '1' { 1 } else { 0 };
                     current_byte = (current_byte << 1) | bit_value;
 
-                    remaining_bytes -= 1;
+                    remaining_bits -= 1;
 
                     // If current_byte is full, push it to encoded data and reinitialize our monitors
-                    if remaining_bytes == 0 {
-                        encoded_data.push(current_byte);
+                    if remaining_bits == 0 {
+                        encoded.data.push(current_byte);
                         current_byte = 0;
-                        remaining_bytes = 8;
+                        remaining_bits = 8;
                     }
                 }
             } else {
@@ -132,10 +138,21 @@ impl<'a> HuffmanEncoder<'a> {
             }
         }
 
-        Ok(encoded_data)
+        // Add padding if needed
+        let padding_bits = remaining_bits % 8;
+        println!("padding bits {}",padding_bits  );
+        if padding_bits > 0 {
+            current_byte <<= padding_bits;
+
+            println!("after: {:b}", current_byte);
+            encoded.data.push(current_byte);
+            encoded.padding = Some(padding_bits);
+        }
+        
+        Ok(encoded)
     }
 
-    pub fn decode(&self, encoded_data: Vec<u8>) -> Result<Vec<u8>, Error> {
+    pub fn decode(&self, encoded_data: Encoded) -> Result<Vec<u8>, Error> {
         decode(&self.root, encoded_data)
     }
 }
@@ -168,13 +185,28 @@ fn assign_codes<'a>(
     }
 }
 
-fn decode<'a>(root: &'a HuffmanNode<'a>, encoded_data: Vec<u8>) -> Result<Vec<u8>, Error> {
+fn decode<'a>(root: &'a HuffmanNode<'a>, encoded: Encoded) -> Result<Vec<u8>, Error> {
     let mut decoded_data = Vec::new();
     let mut current_node = root;
 
-    for byte in encoded_data {
-        for bit_position in (0..8).rev() {
-            let bit = (byte >> bit_position) & 1;
+    let Encoded { mut data, padding } = encoded;
+    let last_index = data.len() - 1;
+
+    for (index, byte) in data.iter_mut().enumerate() {
+        let mut range = 8;
+
+        // handle padding of last byte
+        if index == last_index {
+            let pad = padding.unwrap_or(0);
+            *byte >>= pad;
+            range -= pad;
+        }
+
+        for bit_position in (0..range).rev() {
+            let bit = (*byte >> bit_position) & 1;
+            if index == last_index {
+                println!("bit {}", bit);
+            }
             if bit == 0 {
                 if let Some(left) = current_node.left() {
                     current_node = left;

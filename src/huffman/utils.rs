@@ -79,7 +79,8 @@ impl BitString for String {
 #[derive(Serialize, Deserialize)]
 pub struct Header {
     pub frequencies: Frequencies,
-    pub extension: Option<String>
+    pub extension: Option<String>,
+    pub padding: Option<u8>
 }
 
 /// Generates a repeated character string

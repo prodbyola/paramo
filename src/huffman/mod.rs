@@ -4,7 +4,7 @@ use std::io::{Result as ioResult, Write, Read, Seek, SeekFrom};
 use crate::huffman::utils::{str_generator, Header};
 
 use self::frequency::frequency_counter;
-use self::encoder::HuffmanEncoder;
+use self::encoder::{HuffmanEncoder, Encoded};
 use self::utils::{BitString, AppOptions, rm_file, ParamoIOFiles};
 
 mod frequency;
@@ -19,11 +19,12 @@ fn huffman_encoder(opts: AppOptions) -> ioResult<()>{
     let freq = frequency_counter(&input_data).unwrap();
     
     let mut encoder = HuffmanEncoder::new(&freq.data);
-    let data = encoder.encode(&input_data)?;
+    let encoded = encoder.encode(&input_data)?;
 
     let header_bytes = serde_json::to_vec(&Header { 
         frequencies: freq.data,
-        extension: io_files.input_ext
+        extension: io_files.input_ext,
+        padding: encoded.padding
     })?;
 
     // We generate a 4-byte container to store our header length
@@ -43,7 +44,7 @@ fn huffman_encoder(opts: AppOptions) -> ioResult<()>{
 
     file.write_all(&hlen)?;
     file.write_all(&header_bytes)?;
-    file.write_all(&data)?;
+    file.write_all(&encoded.data)?;
 
     Ok(())
 }
@@ -73,7 +74,12 @@ fn huffman_decoder(opts: AppOptions) -> ioResult<()> {
     let mut data = Vec::new();
     file.read_to_end(&mut data)?;
 
-    let decoded_data = encoder.decode(data)?;
+    let encoded = Encoded {
+        data,
+        padding: header.padding
+    };
+
+    let decoded_data = encoder.decode(encoded)?;
     let mut output = io_files.output;
     let mut ext = io_files.output_ext.unwrap_or_default();
     if let Some(hext) = header.extension {
@@ -82,7 +88,7 @@ fn huffman_decoder(opts: AppOptions) -> ioResult<()> {
     
     output.set_extension(ext);
     rm_file(&output)?;
-    
+
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -102,3 +108,4 @@ pub fn run_huffman(opts: AppOptions) -> ioResult<()> {
 
     Ok(())
 }
+

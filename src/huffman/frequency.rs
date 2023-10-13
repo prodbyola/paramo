@@ -68,8 +68,9 @@ mod test {
 
     #[test]
     fn test_create_queue() -> ioResult<()>{
-        let data = read("test.txt")?;
+        let data = read("sample2.txt")?;
         let q = frequency_counter(&data);
+        
         assert!(q.is_some());
 
         Ok(())
