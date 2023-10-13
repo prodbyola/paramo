@@ -32,6 +32,9 @@ When compressing, output file extension will be `.paramo`. When decompressing, o
 ### Note on Compressible File Types
 Huffman encoding (currently implemented in Paramo) is a lossless compression method and may not be very effective for compressing already compressed file formats like MP3, JPEG or ZIP files. It also not most suitable for compressing Random or Highly Entropic Data, Binary Executable Files, Highly Compressed Images and Videos, Encrypted Data or Already Compressed Archives.
 
+## Contributing
+This is a [Rust](https://www.rust-lang.org/tools/install) project. Contributions and improvments are highly welcomed! 
+
 ## Roadmap
 - Add Process Monitor
 - Add Deflate implementation
