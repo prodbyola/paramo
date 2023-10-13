@@ -30,8 +30,6 @@ paramo -i sample.paramo -d
 When compressing, output file extension will be `.paramo`. When decompressing, output file extension will same as original file.
 
 ## Roadmap
-- Add more tests
 - Add Process Monitor
-- Fix padding issues
 - Add LZMA2 implementation
 - Folder compression

@@ -109,3 +109,21 @@ pub fn run_huffman(opts: AppOptions) -> ioResult<()> {
     Ok(())
 }
 
+#[cfg(test)]
+mod test {
+    use super::{utils::AppOptions, run_huffman};
+
+    #[test]
+    fn test_encoder(){
+        let opts = AppOptions{
+            input: String::from("sample.txt"),
+            output_folder: None,
+            filename: None,
+            decode: false
+        };
+
+        let encoder = run_huffman(opts);
+
+        assert!(encoder.is_ok());
+    }
+}

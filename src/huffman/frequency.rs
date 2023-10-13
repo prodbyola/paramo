@@ -67,8 +67,8 @@ mod test {
     use std::io::Result as ioResult;
 
     #[test]
-    fn test_create_queue() -> ioResult<()>{
-        let data = read("sample2.txt")?;
+    fn test_counter() -> ioResult<()>{
+        let data = read("sample.txt")?;
         let q = frequency_counter(&data);
         
         assert!(q.is_some());
