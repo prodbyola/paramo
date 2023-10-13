@@ -26,10 +26,14 @@ The command above will produce a `sample.paramo` encoded file. To decode the enc
 paramo -i sample.paramo -d
 ```
 
-### Note on output extension
+### Note on Output Extension
 When compressing, output file extension will be `.paramo`. When decompressing, output file extension will same as original file.
+
+### Note on Compressible File Types
+Huffman encoding (currently implemented in Paramo) is a lossless compression method and may not be very effective for compressing already compressed file formats like MP3, JPEG or ZIP files. It also not most suitable for compressing Random or Highly Entropic Data, Binary Executable Files, Highly Compressed Images and Videos, Encrypted Data or Already Compressed Archives.
 
 ## Roadmap
 - Add Process Monitor
+- Add Deflate implementation
 - Add LZMA2 implementation
 - Folder compression

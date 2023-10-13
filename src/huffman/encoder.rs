@@ -140,11 +140,9 @@ impl<'a> HuffmanEncoder<'a> {
 
         // Add padding if needed
         let padding_bits = remaining_bits % 8;
-        println!("padding bits {}",padding_bits  );
         if padding_bits > 0 {
             current_byte <<= padding_bits;
 
-            println!("after: {:b}", current_byte);
             encoded.data.push(current_byte);
             encoded.padding = Some(padding_bits);
         }
@@ -204,9 +202,6 @@ fn decode<'a>(root: &'a HuffmanNode<'a>, encoded: Encoded) -> Result<Vec<u8>, Er
 
         for bit_position in (0..range).rev() {
             let bit = (*byte >> bit_position) & 1;
-            if index == last_index {
-                println!("bit {}", bit);
-            }
             if bit == 0 {
                 if let Some(left) = current_node.left() {
                     current_node = left;
