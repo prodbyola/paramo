@@ -37,4 +37,4 @@ This is a [Rust](https://www.rust-lang.org/tools/install) project. Contributions
 
 ## Roadmap
 - Add Process Monitor
-- Archiving and Folder compression
+- Implement or add LZMA compression
