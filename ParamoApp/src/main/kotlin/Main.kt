@@ -36,7 +36,7 @@ fun App() {
             ){
                 AddFileZone(width = uploadZoneWidth)
                 Spacer(modifier = Modifier.height(14.dp))
-                UploadData(width = uploadZoneWidth)
+                AfterCompression(width = uploadZoneWidth)
             }
 
             Row(
@@ -60,7 +60,7 @@ fun App() {
                     elevation = null,
                     enabled = false,
                 ) {
-                    Text("Upload")
+                    Text("Compress")
                 }
             }
         }
