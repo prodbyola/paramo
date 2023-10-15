@@ -1,5 +1,8 @@
 use std::{collections::{HashMap, BinaryHeap}, rc::Rc};
 use std::io::Error;
+
+use indicatif::{ProgressBar, ProgressStyle};
+
 use super::frequency::{Frequencies, Frequency};
 
 #[derive(Default)]
@@ -74,6 +77,7 @@ pub struct HuffmanEncoder<'a> {
 
 impl<'a> HuffmanEncoder<'a> {
     pub fn new(frequencies: &'a Frequencies) -> HuffmanEncoder {
+        
         // The priority queue for building our initial partial tree
         let mut pq = BinaryHeap::with_capacity(frequencies.len());
         for freq in frequencies {
@@ -111,12 +115,20 @@ impl<'a> HuffmanEncoder<'a> {
 
     pub fn encode(&'a mut self, input_data: &Vec<u8>) -> Result<Encoded, Error> {
 
+        let pb = ProgressBar::new(input_data.len() as u64);
+        pb.set_style(
+            ProgressStyle::default_bar()
+                .template("[Step 2/2] Performing Compression: \n[{wide_bar}] ({percent}%)").unwrap()
+        );
+        
         // Let's encode our data as binary using the generated Huffman code.
         let mut current_byte = 0u8; // 8-bits zeros
         let mut remaining_bits: u8 = 8;
         let mut encoded = Encoded::default();
 
         for c in input_data {
+            pb.inc(1);
+
             if let Some(code) = self.codes.get(&(*c as char)) {
                 for bit in code.chars() {
                     let bit_value: u8 = if bit == '1' { 1 } else { 0 };

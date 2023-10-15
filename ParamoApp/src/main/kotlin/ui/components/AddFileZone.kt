@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import libs.filePicker
 
 @Composable
 fun AddFileZone(width: Dp){
@@ -52,7 +53,14 @@ fun AddFileZone(width: Dp){
             )
             Spacer(modifier = Modifier.height(24.dp))
             OutlinedButton(
-                onClick = {}
+                onClick = {
+                    val file = filePicker()
+                    if(file != null){
+                        print(file.name)
+                    } else {
+                        print("File is null")
+                    }
+                }
             ){
                 Text(
                     "Select File".uppercase(),

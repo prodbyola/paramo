@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use indicatif::{ProgressBar, ProgressStyle};
 
 #[derive(Serialize, Deserialize)]
 pub struct  Frequency(pub char, pub usize);
@@ -8,8 +9,8 @@ pub struct FrequencyStruct {
 }
 
 impl FrequencyStruct {
-    fn new(len: usize) -> FrequencyStruct {
-        FrequencyStruct { data: Vec::with_capacity(len) }
+    fn new(len: &usize) -> FrequencyStruct {
+        FrequencyStruct { data: Vec::with_capacity(*len) }
     }
 
     /// Retrieves a node's index. 
@@ -45,16 +46,26 @@ impl FrequencyStruct {
 
 pub fn frequency_counter(data: &Vec<u8>) -> Option<FrequencyStruct> {
     if data.is_empty() {
-        return None
+        return None;
     }
 
-    let mut queue = FrequencyStruct::new(data.len());
+    let len = data.len();
+    let mut queue = FrequencyStruct::new(&len);
+
+    let pb = ProgressBar::new(len as u64);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("[Step 1/2] Analyzing Input Data: \n[{wide_bar}] ({percent}%)").unwrap()
+    );
 
     for b in data {
+        pb.inc(1);
+
         match queue.get_data_index(&(*b as char)) {
             Some(i) => queue.increase_data_weight(i),
-            None => queue.insert_new_tree(*b as char)
+            None => queue.insert_new_tree(*b as char),
         }
+       
     }
 
     Some(queue)
