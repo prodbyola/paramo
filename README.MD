@@ -34,7 +34,3 @@ Huffman encoding (currently implemented in Paramo) is a lossless compression met
 
 ## Contributing
 This is a [Rust](https://www.rust-lang.org/tools/install) project. Contributions and improvments are highly welcomed! 
-
-## Roadmap
-- Add Process Monitor
-- Implement or add LZMA compression
